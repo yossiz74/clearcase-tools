@@ -1,5 +1,5 @@
 import argparse, subprocess, os
-import datetime
+import datetime, time
 
 MIN_DAYS = 1
 MAX_DAYS = 7
@@ -62,23 +62,30 @@ def get_date_before_today(num_days_ago):
     return get_date_before_some_date(datetime.datetime.now(), num_days_ago)
 
 def get_date_before_some_date(reference_date, num_days_ago):
-    delta = datetime.timedelta(days=num_days_ago)
-    earlier = reference_date - delta
-    return earlier
+    return (reference_date - datetime.timedelta(days=num_days_ago))
 
-def get_checkin_times(path, branch, since_date):
-    query = 'brtype(' + branch + ')&&created_since(' + since_date.strftime("%d-%b-%Y") + ')'
+def cctime_to_datetime(cctime):
+    # ClearCase time format: %Y-%m-%dT%H:%M:%S+<timezone hour:minute>
+    # TODO: consider the time zone
+    ts = time.strptime(cctime,"%Y-%m-%dT%H:%M:%S+02:00")
+    return datetime.datetime(ts.tm_year,ts.tm_mon,ts.tm_mday,ts.tm_hour,ts.tm_min,ts.tm_sec)
+    
+
+def get_checkin_times(path, branch, since_date, upto_date):
+    upto_not_including_date = upto_date + datetime.timedelta(days=1)
+    query = 'brtype(' + branch + ')&&created_since(' + since_date.strftime("%d-%b-%Y") + ')&&!created_since(' + upto_not_including_date.strftime("%d-%b-%Y") + ')'
     #out = subprocess.check_output(["cleartool","find",path,"-version",query,"-print"],shell=False)
-    out = subprocess.check_output(["cleartool","find",path,"-version",query,"-exec","cleartool desc -fmt %d\\n %CLEARCASE_PN%"],shell=False)
+    out = subprocess.check_output(["cleartool","find",path,"-version",query,"-exec","cleartool desc -fmt %d\\n %CLEARCASE_XPN%"],shell=False)
     timestamps = filter(None, out.split('\r\n'))
-    return timestamps
+    return [cctime_to_datetime(x) for x in timestamps]
 
 def main():
     parser = create_parser()
     args = parser.parse_args()
     validate_args(args)
-    print "Computing check-in trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + "\n"
-    times_list = get_checkin_times(args.path,args.branch,get_date_before_today(args.days))
+    print "Check-in Trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + "\n"
+    times_list = get_checkin_times(args.path,args.branch,get_date_before_today(args.days),datetime.datetime.now())
+    print "Data points:\n" + str(times_list)
 
 if __name__ == '__main__':
     main()

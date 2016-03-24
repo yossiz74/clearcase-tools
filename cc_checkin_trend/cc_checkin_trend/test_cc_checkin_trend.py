@@ -61,30 +61,50 @@ class ArgValidatorTestCases(TestCase):
     #    self.assertEqual(get_vob_of_path("\\view\\some_view_tag\\vob4\\resources","vob4"))
     #    self.assertEqual(get_vob_of_path("M:\\some_view_tag\\vob5\\dir1\\dir2","vob5"))
 
-class ClearCaseFindTestCases(TestCase):
-    """
-    Base TestCase class, sets up known to work 'cleartool find' data
-    """
-    @classmethod
-    def setUpClass(cls):
-        cls.path = "V:\\scm\\scripts"
-        cls.branch = "v12.2"
-        cls.since_date = datetime.date(2016,3,17)
-    
-class DataCollectorTestCases(ClearCaseFindTestCases):
+class FormatConvertorTestCases(TestCase):
     def test_days_ago_converted_to_date(self):
         ref_date = datetime.date(2016,3,24)
         for day in range(0,5):
             self.assertEqual(str(ref_date.day-day),cc_checkin_trend.get_date_before_some_date(ref_date,day).strftime("%d"))
-    def test_checkin_list_has_correct_len(self):
-        expected_len = 4
-        times_list = cc_checkin_trend.get_checkin_times(self.path,self.branch,self.since_date)
-        self.assertEqual(len(times_list),expected_len)
-    def test_checkin_list_is_valid_timestamps(self):
-        cc_timestamp_regex = "\d\d\d\d\-\d\d\-\d\dT\d\d\:\d\d\:\d\d"
-        times_list = cc_checkin_trend.get_checkin_times(self.path,self.branch,self.since_date)
-        for timestamp in times_list:
-            self.assertTrue(re.match(cc_timestamp_regex,timestamp))
+    def test_cctime_to_datetime(self):
+        cc_date = "2016-03-18T11:20:24+02:00"
+        expected_date = datetime.datetime(2016,3,18,11,20,24) # TODO: add timezone
+        got_date = cc_checkin_trend.cctime_to_datetime(cc_date)
+        self.assertEqual(got_date,expected_date)
+
+class DataCollectorTestCases(TestCase):
+    def test_checkin_list_1(self):
+        path="V:\\scm\\scripts"
+        branch="v12.2"
+        since_date=datetime.date(2016,3,17)
+        upto_date=datetime.date(2016,3,25)
+        expected_list=["2016-03-18T11:20:24+02:00","2016-03-18T11:30:37+02:00","2016-03-20T09:16:04+02:00","2016-03-18T11:20:25+02:00"]
+        times_list = cc_checkin_trend.get_checkin_times(path,branch,since_date,upto_date)
+        self.assertEqual(times_list,expected_list)
+    def test_checkin_list_2(self):
+        path="V:\\scm\\scripts"
+        branch="main"
+        since_date=datetime.date(2016,3,17)
+        upto_date=datetime.date(2016,3,25)
+        expected_list=[]
+        times_list = cc_checkin_trend.get_checkin_times(path,branch,since_date,upto_date)
+        self.assertEqual(times_list,expected_list)
+    def test_checkin_list_3(self):
+        path="V:\\scm\\scripts"
+        branch="main"
+        since_date=datetime.date(2015,12,1)
+        upto_date=datetime.date(2015,12,31)
+        expected_list=["2015-12-03T16:00:55+02:00",
+            "2015-12-03T16:00:56+02:00",
+            "2015-12-20T13:54:26+02:00",
+            "2015-12-21T09:09:45+02:00",
+            "2015-12-07T13:37:55+02:00",
+            "2015-12-22T14:28:31+02:00",
+            "2015-12-22T14:28:32+02:00",
+            "2015-12-07T13:37:34+02:00",
+            "2015-12-07T13:37:36+02:00"]
+        times_list = cc_checkin_trend.get_checkin_times(path,branch,since_date,upto_date)
+        self.assertEqual(times_list,expected_list)
         
 if __name__ == '__main__':
     unittest.main()
