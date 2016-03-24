@@ -15,7 +15,7 @@
     <RootNamespace>cc-graph-checkin</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <CommandLineArguments>-b main -d 7 \scm\scripts</CommandLineArguments>
+    <CommandLineArguments>-b v12.2 -d 7 V:\scm\scripts</CommandLineArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
