@@ -17,14 +17,21 @@ class ArgParserTestCases(CommandLineTestCase):
     def test_empty_args(self):
         with self.assertRaises(SystemExit):
             self.parser.parse_args([])
-    def test_all_args(self):
+    def test_all_mandatory_args(self):
         args = self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7'])
         self.assertEqual(args.branch,'main')
         self.assertEqual(args.days,7)
         self.assertEqual(args.path,'\\scm\\scripts')
-    def test_too_many_args(self):
+        self.assertEqual(args.interval,cc_checkin_trend.DEFAULT_INTERVAL)
+    def test_optional_args(self):
+        args = self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7', '-i', '99'])
+        self.assertEqual(args.interval,99)
+    def test_too_many_paths(self):
         with self.assertRaises(SystemExit):
-            self.parser.parse_args(['\\scm\\scripts', '\\vob1\\mst\\c#', '-b', 'main', '-d', '7'])
+            self.parser.parse_args(['\\scm\\scripts', '\\vob1\\src', '-b', 'main', '-d', '7'])
+    def test_missing_arg(self):
+        with self.assertRaises(SystemExit):
+            self.parser.parse_args(['\\scm\\scripts', '-b', '-d', '7'])
 
 class ArgValidatorTestCases(TestCase):
     def test_branch_existing_in_vob(self):
@@ -60,6 +67,14 @@ class ArgValidatorTestCases(TestCase):
     #def test_vob_of_valid_path_in_dyn_view(self):
     #    self.assertEqual(get_vob_of_path("\\view\\some_view_tag\\vob4\\resources","vob4"))
     #    self.assertEqual(get_vob_of_path("M:\\some_view_tag\\vob5\\dir1\\dir2","vob5"))
+    def test_interval_positive(self):
+        interval = 1
+        self.assertTrue(cc_checkin_trend.valid_interval(interval))
+    def test_interval_non_positive(self):
+        interval = 0
+        self.assertFalse(cc_checkin_trend.valid_interval(interval))
+        interval = -5
+        self.assertFalse(cc_checkin_trend.valid_interval(interval))
 
 class FormatConvertorTestCases(TestCase):
     def test_days_ago_converted_to_date(self):
@@ -105,6 +120,17 @@ class DataCollectorTestCases(TestCase):
             "2015-12-07T13:37:36+02:00"]
         times_list = cc_checkin_trend.get_checkin_times(path,branch,since_date,upto_date)
         self.assertEqual(times_list,expected_list)
+
+class TrendComputationTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.results = [datetime.datetime(2016, 3, 18, 11, 20, 24), datetime.datetime(2016, 3, 18, 11, 30, 37), datetime.datetime(2016, 3, 20, 9, 16, 4), datetime.datetime(2016, 3, 18, 11, 20, 25)];
+
+class TrendResultsTestCases(TrendComputationTestCase):
+    def test_daily_trend(self):
+        daily_expected = [[datetime.datetime(2016,3,18,0,0,0),3],[datetime.datetime(2016,3,20,0,0,0),1]]
+        daily_trend = cc_checkin_trend.generate_results(self.results,24*60)
+        self.assertEqual(daily_trend,daily_expected)
         
 if __name__ == '__main__':
     unittest.main()

@@ -3,28 +3,36 @@ import datetime, time
 
 MIN_DAYS = 1
 MAX_DAYS = 7
+DEFAULT_INTERVAL = 60
 
 def create_parser():
     parser = argparse.ArgumentParser(
         description='Display ClearCase check-ins trend for specific branch'
     )
 
+    # path in view
     parser.add_argument(
         'path', type=str,
-        help='path in a VOB'
+        help='path in a view'
     )
 
+    # branch
     parser.add_argument(
         '-b', '--branch', type=str, required=True,
         help='branch name'
     )
 
+    # days ago
     parser.add_argument(
         '-d', '--days', type=int, required=True,
         help='trend length in days (' + str(MIN_DAYS) + "-" + str(MAX_DAYS) + ')'
     )
 
-    # TODO interval in minutes (optional)
+    # interval in minutes (optional)
+    parser.add_argument(
+        '-i', '--interval', type=int, required=False, default=DEFAULT_INTERVAL,
+        help='interval in minutes (default: ' + str(DEFAULT_INTERVAL) + ')'
+    )
 
     return parser
 
@@ -34,6 +42,9 @@ def valid_branch(branch,vob):
 
 def valid_days(days):
     return ((days >= MIN_DAYS) and (days <= MAX_DAYS)) 
+
+def valid_interval(interval):
+    return (interval >= 1)
 
 def valid_path(path):
     if os.path.isdir(path):
@@ -76,16 +87,23 @@ def get_checkin_times(path, branch, since_date, upto_date):
     query = 'brtype(' + branch + ')&&created_since(' + since_date.strftime("%d-%b-%Y") + ')&&!created_since(' + upto_not_including_date.strftime("%d-%b-%Y") + ')'
     #out = subprocess.check_output(["cleartool","find",path,"-version",query,"-print"],shell=False)
     out = subprocess.check_output(["cleartool","find",path,"-version",query,"-exec","cleartool desc -fmt %d\\n %CLEARCASE_XPN%"],shell=False)
-    timestamps = filter(None, out.split('\r\n'))
-    return [cctime_to_datetime(x) for x in timestamps]
+    return filter(None, out.split('\r\n'))
+
+# compute the checkins per interval, and return an array of [starttime,amount], ignoring empty intervals
+def generate_results(results,interval):
+    return [[datetime.datetime(2016,3,18,0,0,0),3],[datetime.datetime(2016,3,20,0,0,0),1]]
+
+def display_results_as_text():
+    raise NotImplementedError
 
 def main():
     parser = create_parser()
     args = parser.parse_args()
     validate_args(args)
     print "Check-in Trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + "\n"
-    times_list = get_checkin_times(args.path,args.branch,get_date_before_today(args.days),datetime.datetime.now())
-    print "Data points:\n" + str(times_list)
+    cc_times = get_checkin_times(args.path,args.branch,get_date_before_today(args.days),datetime.datetime.now())
+    checkin_times = [cctime_to_datetime(x) for x in cc_times]
+    display_results_as_text(generate_results(checkin_times,args.interval))
 
 if __name__ == '__main__':
     main()
