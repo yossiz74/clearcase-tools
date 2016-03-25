@@ -1,5 +1,6 @@
 import argparse, subprocess, os
 import datetime, time
+import collections
 
 MIN_DAYS = 1
 MAX_DAYS = 7
@@ -89,11 +90,18 @@ def get_checkin_times(path, branch, since_date, upto_date):
     out = subprocess.check_output(["cleartool","find",path,"-version",query,"-exec","cleartool desc -fmt %d\\n %CLEARCASE_XPN%"],shell=False)
     return filter(None, out.split('\r\n'))
 
-# compute the checkins per interval, and return an array of [starttime,amount], ignoring empty intervals
-def generate_results(results,interval):
-    return [[datetime.datetime(2016,3,18,0,0,0),3],[datetime.datetime(2016,3,20,0,0,0),1]]
+# compute the checkins per interval, and return an dictionary of starttime->amount, ignoring empty intervals
+def compute_trend_data(results,interval):
+    trend_data = collections.defaultdict(int)
+    for x in results:
+        adjusted_x = datetime.datetime(x.year,x.month,x.day,0,0,0)
+        if not trend_data[adjusted_x]:
+            trend_data[adjusted_x] = 1
+        else:
+            trend_data[adjusted_x] += 1
+    return trend_data
 
-def display_results_as_text():
+def display_results_as_text(trend_data):
     raise NotImplementedError
 
 def main():
@@ -103,7 +111,7 @@ def main():
     print "Check-in Trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + "\n"
     cc_times = get_checkin_times(args.path,args.branch,get_date_before_today(args.days),datetime.datetime.now())
     checkin_times = [cctime_to_datetime(x) for x in cc_times]
-    display_results_as_text(generate_results(checkin_times,args.interval))
+    display_results_as_text(compute_trend_data(checkin_times,args.interval))
 
 if __name__ == '__main__':
     main()

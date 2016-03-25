@@ -2,6 +2,7 @@ from unittest import TestCase
 import cc_checkin_trend
 import datetime
 import re
+import collections
 
 # Inspired by http://dustinrcollins.com/testing-python-command-line-apps
 class CommandLineTestCase(TestCase):
@@ -88,6 +89,8 @@ class FormatConvertorTestCases(TestCase):
         self.assertEqual(got_date,expected_date)
 
 class DataCollectorTestCases(TestCase):
+    # TODO test that clearcase error lines are skipped
+    # TODO test when one of the children paths contains spaces
     def test_checkin_list_1(self):
         path="V:\\scm\\scripts"
         branch="v12.2"
@@ -109,7 +112,8 @@ class DataCollectorTestCases(TestCase):
         branch="main"
         since_date=datetime.date(2015,12,1)
         upto_date=datetime.date(2015,12,31)
-        expected_list=["2015-12-03T16:00:55+02:00",
+        expected_list=[
+            "2015-12-03T16:00:55+02:00",
             "2015-12-03T16:00:56+02:00",
             "2015-12-20T13:54:26+02:00",
             "2015-12-21T09:09:45+02:00",
@@ -124,13 +128,41 @@ class DataCollectorTestCases(TestCase):
 class TrendComputationTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.results = [datetime.datetime(2016, 3, 18, 11, 20, 24), datetime.datetime(2016, 3, 18, 11, 30, 37), datetime.datetime(2016, 3, 20, 9, 16, 4), datetime.datetime(2016, 3, 18, 11, 20, 25)];
+        cls.results = [
+            datetime.datetime(2015, 12,  3, 16,  0, 55), 
+            datetime.datetime(2015, 12,  3, 16,  0, 56), 
+            datetime.datetime(2015, 12, 20, 13, 54, 26), 
+            datetime.datetime(2015, 12,  7, 13, 37, 55),
+            datetime.datetime(2015, 12,  7, 13, 38, 34),
+            datetime.datetime(2015, 12,  7,  9,  9,  9)
+        ];
 
 class TrendResultsTestCases(TrendComputationTestCase):
     def test_daily_trend(self):
-        daily_expected = [[datetime.datetime(2016,3,18,0,0,0),3],[datetime.datetime(2016,3,20,0,0,0),1]]
-        daily_trend = cc_checkin_trend.generate_results(self.results,24*60)
-        self.assertEqual(daily_trend,daily_expected)
+        expected = collections.defaultdict(int)
+        expected[datetime.datetime(2015,12, 3,0,0,0)] = 2
+        expected[datetime.datetime(2015,12, 7,0,0,0)] = 3
+        expected[datetime.datetime(2015,12,20,0,0,0)] = 1
+        trend = cc_checkin_trend.compute_trend_data(self.results,24*60)
+        self.assertEqual(trend,expected)
+    def test_hourly_trend(self):
+        expected = collections.defaultdict(int)
+        expected[datetime.datetime(2015,12, 3,16,0,0)] = 2
+        expected[datetime.datetime(2015,12, 7, 9,0,0)] = 1
+        expected[datetime.datetime(2015,12, 7,13,0,0)] = 2
+        expected[datetime.datetime(2015,12,20,13,0,0)] = 1
+        trend = cc_checkin_trend.compute_trend_data(self.results,60)
+        self.assertEqual(trend,expected)
+    def test_five_minutes_trend(self):
+        expected = collections.defaultdict(int)
+        expected[datetime.datetime(2015,12, 3,16, 0,0)] = 2
+        expected[datetime.datetime(2015,12, 7, 9, 9,0)] = 1
+        expected[datetime.datetime(2015,12, 7,13,37,0)] = 1
+        expected[datetime.datetime(2015,12, 7,13,38,0)] = 1
+        expected[datetime.datetime(2015,12,20,13,54,0)] = 1
+        trend = cc_checkin_trend.compute_trend_data(self.results,5)
+        self.assertEqual(trend,expected)
+        
         
 if __name__ == '__main__':
     unittest.main()
