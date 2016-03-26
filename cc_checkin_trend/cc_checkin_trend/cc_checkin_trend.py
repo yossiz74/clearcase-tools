@@ -1,5 +1,6 @@
 import argparse, subprocess, os
 import datetime, time
+import math
 import collections
 
 MIN_DAYS = 1
@@ -94,11 +95,14 @@ def get_checkin_times(path, branch, since_date, upto_date):
 def compute_trend_data(results,interval):
     trend_data = collections.defaultdict(int)
     for x in results:
-        adjusted_x = datetime.datetime(x.year,x.month,x.day,0,0,0)
-        if not trend_data[adjusted_x]:
-            trend_data[adjusted_x] = 1
+        adjusted_x = x
+        if interval==60*24:
+            adjusted_x = datetime.datetime(x.year,x.month,x.day,0,0,0)  
+        elif interval<=60:
+            adjusted_x = datetime.datetime(x.year,x.month,x.day,x.hour,int(math.floor(x.minute/interval)*interval),0)  
         else:
-            trend_data[adjusted_x] += 1
+            raise NotImplementedError
+        trend_data[adjusted_x] += 1
     return trend_data
 
 def display_results_as_text(trend_data):

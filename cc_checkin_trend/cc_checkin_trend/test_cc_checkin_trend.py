@@ -156,11 +156,19 @@ class TrendResultsTestCases(TrendComputationTestCase):
     def test_five_minutes_trend(self):
         expected = collections.defaultdict(int)
         expected[datetime.datetime(2015,12, 3,16, 0,0)] = 2
+        expected[datetime.datetime(2015,12, 7, 9, 5,0)] = 1
+        expected[datetime.datetime(2015,12, 7,13,35,0)] = 2
+        expected[datetime.datetime(2015,12,20,13,50,0)] = 1
+        trend = cc_checkin_trend.compute_trend_data(self.results,5)
+        self.assertEqual(trend,expected)
+    def test_one_minute_trend(self):
+        expected = collections.defaultdict(int)
+        expected[datetime.datetime(2015,12, 3,16, 0,0)] = 2
         expected[datetime.datetime(2015,12, 7, 9, 9,0)] = 1
         expected[datetime.datetime(2015,12, 7,13,37,0)] = 1
         expected[datetime.datetime(2015,12, 7,13,38,0)] = 1
         expected[datetime.datetime(2015,12,20,13,54,0)] = 1
-        trend = cc_checkin_trend.compute_trend_data(self.results,5)
+        trend = cc_checkin_trend.compute_trend_data(self.results,1)
         self.assertEqual(trend,expected)
         
         
