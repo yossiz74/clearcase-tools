@@ -15,7 +15,7 @@
     <RootNamespace>cc-graph-checkin</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <CommandLineArguments>-b v12.2 -d 5 V:\algadm\install\Is_Imaginet\Carestream</CommandLineArguments>
+    <CommandLineArguments>-b v12.2 -d 3 V:\vob1\mst\src\DIDB -i 10</CommandLineArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

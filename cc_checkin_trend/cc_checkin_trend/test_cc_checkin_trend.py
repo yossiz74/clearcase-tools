@@ -135,7 +135,7 @@ class TrendComputationTestCase(TestCase):
             datetime.datetime(2015, 12,  7, 13, 37, 55),
             datetime.datetime(2015, 12,  7, 13, 38, 34),
             datetime.datetime(2015, 12,  7,  9,  9,  9)
-        ];
+        ]
 
 class TrendResultsTestCases(TrendComputationTestCase):
     def test_daily_trend(self):
