@@ -71,8 +71,8 @@ def validate_args(args):
         raise SystemExit
     return
 
-def get_date_before_today(num_days_ago):
-    return get_date_before_some_date(datetime.datetime.now(), num_days_ago)
+#def get_date_before_today(num_days_ago):
+#    return get_date_before_some_date(datetime.datetime.now(), num_days_ago)
 
 def get_date_before_some_date(reference_date, num_days_ago):
     return (reference_date - datetime.timedelta(days=num_days_ago))
@@ -105,16 +105,43 @@ def compute_trend_data(results,interval):
         trend_data[adjusted_time] += 1
     return trend_data
 
+def perdelta(start, end, delta):
+    # see http://stackoverflow.com/questions/10688006/generate-a-list-of-datetimes-between-an-interval-in-python
+    curr = start
+    while curr < end:
+        yield curr
+        curr += delta
+
+def result_to_text(timestamp,count):
+    line = str(timestamp) + ' - ' + str(count)
+    return line
+
+def display_text_histogram(data_points,from_date,to_date,interval):
+    lines = []
+    for result in perdelta(from_date,to_date + datetime.timedelta(days=1),datetime.timedelta(minutes=interval)):
+        if result in data_points.keys():
+            lines.append(result_to_text(result,data_points[result]))
+        else:
+            lines.append(result_to_text(result,0))
+    return lines
+
 def main():
     parser = create_parser()
     args = parser.parse_args()
     validate_args(args)
     print "collecting ClearCase historical data, please wait..."
-    cc_times = get_checkin_times(args.path,args.branch,get_date_before_today(args.days),datetime.datetime.now())
+    now_date = datetime.datetime.now()
+    now_date = now_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    from_date = get_date_before_some_date(now_date,args.days)
+    to_date = now_date
+    cc_times = get_checkin_times(args.path,args.branch,from_date,to_date)
     checkin_times = [cctime_to_datetime(x) for x in cc_times]
     data_points = compute_trend_data(checkin_times,args.interval)
     if len(data_points) > 0:
         print "Check-in Trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + " at " + str(args.interval) + " minutes interval:\n"
+        lines = display_text_histogram(data_points,from_date,to_date,args.interval)
+        for line in lines:
+            print line + "\r" 
         total_checkins = len(cc_times)
         max_checkins_in_interval = max(data_points.values())
         print "Total " + str(total_checkins) + " check-ins, at most " + str(max_checkins_in_interval) + " check-ins per interval.\n"
