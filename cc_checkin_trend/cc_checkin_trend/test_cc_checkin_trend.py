@@ -172,10 +172,16 @@ class TrendResultsTestCases(TrendComputationTestCase):
         self.assertEqual(trend,expected)
  
 class HistogramTestCases(TestCase):
-    def test_result_to_text(self):
+    def test_positive_result_to_text(self):
         result_time = datetime.datetime(2015,12,3,16, 0,0)
         result_data = 2
-        expected_line = "2015-12-03 16:00:00 - 2"
+        expected_line = "2015-12-03 16:00:00 " + cc_checkin_trend.HISTOGRAM_CHAR + cc_checkin_trend.HISTOGRAM_CHAR
+        line = cc_checkin_trend.result_to_text(result_time,result_data)
+        self.assertEqual(line,expected_line)
+    def test_zero_result_to_text(self):
+        result_time = datetime.datetime(2015,12,3,16, 0,0)
+        result_data = 0
+        expected_line = "2015-12-03 16:00:00"
         line = cc_checkin_trend.result_to_text(result_time,result_data)
         self.assertEqual(line,expected_line)
     def test_text_histogram_hourly(self):

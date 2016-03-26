@@ -6,6 +6,7 @@ import collections
 MIN_DAYS = 1
 MAX_DAYS = 7
 DEFAULT_INTERVAL = 60
+HISTOGRAM_CHAR = '*'
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -113,7 +114,10 @@ def perdelta(start, end, delta):
         curr += delta
 
 def result_to_text(timestamp,count):
-    line = str(timestamp) + ' - ' + str(count)
+    line = str(timestamp)
+    if count > 0:
+        line = line + ' ' + HISTOGRAM_CHAR*count
+
     return line
 
 def display_text_histogram(data_points,from_date,to_date,interval):
