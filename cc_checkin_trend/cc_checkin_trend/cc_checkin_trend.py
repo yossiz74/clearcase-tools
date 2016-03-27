@@ -37,6 +37,11 @@ def create_parser():
         help='interval in minutes (default: ' + str(DEFAULT_INTERVAL) + ')'
     )
 
+    parser.add_argument(
+        '--csv', action='store_true', required=False,
+        help='Write the results as comma separated values.'
+    )
+
     return parser
 
 def valid_branch(branch,vob):
@@ -118,10 +123,13 @@ def result_to_text(timestamp,count):
     line = str(timestamp)
     if count > 0:
         line = line + ' ' + HISTOGRAM_CHAR*count
-
     return line
 
-def display_text_histogram(data_points,from_date,to_date,interval):
+def result_to_csv(timestamp,count):
+    line = str(timestamp) + ',' + str(count)
+    return line
+
+def create_text_histogram(data_points,from_date,to_date,interval):
     lines = []
     for result in perdelta(from_date,to_date + datetime.timedelta(days=1),datetime.timedelta(minutes=interval)):
         if result in data_points.keys():
@@ -130,11 +138,21 @@ def display_text_histogram(data_points,from_date,to_date,interval):
             lines.append(result_to_text(result,0))
     return lines
 
+def create_csv_histogram(data_points,from_date,to_date,interval):
+    lines = []
+    for result in perdelta(from_date,to_date + datetime.timedelta(days=1),datetime.timedelta(minutes=interval)):
+        if result in data_points.keys():
+            lines.append(result_to_csv(result,data_points[result]))
+        else:
+            lines.append(result_to_csv(result,0))
+    return lines
+
 def main():
     parser = create_parser()
     args = parser.parse_args()
     validate_args(args)
-    print "collecting ClearCase historical data, please wait..."
+    if not args.csv:
+        print "collecting ClearCase historical data, please wait..."
     now_date = datetime.datetime.now()
     now_date = now_date.replace(hour=0, minute=0, second=0, microsecond=0)
     from_date = get_date_before_some_date(now_date,args.days)
@@ -143,13 +161,19 @@ def main():
     checkin_times = [cctime_to_datetime(x) for x in cc_times]
     data_points = compute_trend_data(checkin_times,args.interval)
     if len(data_points) > 0:
-        print "Check-in Trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + " at " + str(args.interval) + " minutes interval:\n"
-        lines = display_text_histogram(data_points,from_date,to_date,args.interval)
-        for line in lines:
-            print line + "\r" 
-        total_checkins = len(cc_times)
-        max_checkins_in_interval = max(data_points.values())
-        print "Total " + str(total_checkins) + " check-ins, at most " + str(max_checkins_in_interval) + " check-ins per interval.\n"
+        if args.csv:
+            print "timestamp,count"
+            lines = create_csv_histogram(data_points,from_date,to_date,args.interval)
+            for line in lines:
+                print line
+        else:
+            print "Check-in Trend in branch \'" + args.branch + "\' for " + str(args.days) + " days under " + args.path + " at " + str(args.interval) + " minutes interval:\n"
+            lines = create_text_histogram(data_points,from_date,to_date,args.interval)
+            for line in lines:
+                print line
+            total_checkins = len(cc_times)
+            max_checkins_in_interval = max(data_points.values())
+            print "\nTotal " + str(total_checkins) + " check-ins, at most " + str(max_checkins_in_interval) + " check-ins per interval.\n"
     else:
         print "No check-ins found."
 

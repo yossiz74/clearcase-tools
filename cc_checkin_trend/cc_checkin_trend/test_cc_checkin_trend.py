@@ -25,8 +25,9 @@ class ArgParserTestCases(CommandLineTestCase):
         self.assertEqual(args.path,'\\scm\\scripts')
         self.assertEqual(args.interval,cc_checkin_trend.DEFAULT_INTERVAL)
     def test_optional_args(self):
-        args = self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7', '-i', '99'])
+        args = self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7', '-i', '99', '--csv'])
         self.assertEqual(args.interval,99)
+        self.assertTrue(args.csv)
     def test_too_many_paths(self):
         with self.assertRaises(SystemExit):
             self.parser.parse_args(['\\scm\\scripts', '\\vob1\\src', '-b', 'main', '-d', '7'])
@@ -175,7 +176,7 @@ class TrendResultsTestCases(TrendComputationTestCase):
         trend = cc_checkin_trend.compute_trend_data(self.results,1)
         self.assertEqual(trend,expected)
  
-class HistogramTestCases(TestCase):
+class TextHistogramTestCases(TestCase):
     def test_positive_result_to_text(self):
         result_time = datetime.datetime(2015,12,3,16, 0,0)
         result_data = 2
@@ -196,7 +197,7 @@ class HistogramTestCases(TestCase):
         from_date = datetime.datetime(2015,12,3)
         to_date = datetime.datetime(2015,12,4)
         interval = 60
-        lines = cc_checkin_trend.display_text_histogram(data_points,from_date,to_date,interval)
+        lines = cc_checkin_trend.create_text_histogram(data_points,from_date,to_date,interval)
         # make sure there are enough lines
         self.assertEqual(len(lines),2*24)
         # verify each of the data points appear
@@ -205,6 +206,38 @@ class HistogramTestCases(TestCase):
         expected_line = cc_checkin_trend.result_to_text(datetime.datetime(2015,12,4, 9, 0, 0),1)
         self.assertTrue(expected_line in lines)
         expected_line = cc_checkin_trend.result_to_text(datetime.datetime(2015,12,4,13, 0, 0),3)
+        self.assertTrue(expected_line in lines)
+
+class CSVOutputTestCases(TestCase):
+    def test_positive_result_to_csv(self):
+        result_time = datetime.datetime(2015,12,3,16, 0,0)
+        result_data = 2
+        expected_line = "2015-12-03 16:00:00,2"
+        line = cc_checkin_trend.result_to_csv(result_time,result_data)
+        self.assertEqual(line,expected_line)
+    def test_zero_result_to_csv(self):
+        result_time = datetime.datetime(2015,12,3,16, 0,0)
+        result_data = 0
+        expected_line = "2015-12-03 16:00:00,0"
+        line = cc_checkin_trend.result_to_csv(result_time,result_data)
+        self.assertEqual(line,expected_line)
+    def test_csv_histogram_hourly(self):
+        data_points = collections.defaultdict(int)
+        data_points[datetime.datetime(2015,12,3,16, 0,0)] = 2
+        data_points[datetime.datetime(2015,12,4, 9, 0,0)] = 1
+        data_points[datetime.datetime(2015,12,4,13, 0,0)] = 3
+        from_date = datetime.datetime(2015,12,3)
+        to_date = datetime.datetime(2015,12,4)
+        interval = 60
+        lines = cc_checkin_trend.create_csv_histogram(data_points,from_date,to_date,interval)
+        # make sure there are enough lines
+        self.assertEqual(len(lines),2*24)
+        # verify each of the data points appear
+        expected_line = cc_checkin_trend.result_to_csv(datetime.datetime(2015,12,3,16, 0, 0),2)
+        self.assertTrue(expected_line in lines)
+        expected_line = cc_checkin_trend.result_to_csv(datetime.datetime(2015,12,4, 9, 0, 0),1)
+        self.assertTrue(expected_line in lines)
+        expected_line = cc_checkin_trend.result_to_csv(datetime.datetime(2015,12,4,13, 0, 0),3)
         self.assertTrue(expected_line in lines)
         
 if __name__ == '__main__':
