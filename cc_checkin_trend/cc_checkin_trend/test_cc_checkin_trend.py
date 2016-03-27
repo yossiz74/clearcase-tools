@@ -87,6 +87,10 @@ class FormatConvertorTestCases(TestCase):
         expected_date = datetime.datetime(2016,3,18,11,20,24) # TODO: add timezone
         got_date = cc_checkin_trend.cctime_to_datetime(cc_date)
         self.assertEqual(got_date,expected_date)
+        cc_date = "2016-03-27T07:00:00+03:00"
+        expected_date = datetime.datetime(2016,3,27,7,0,0) # TODO: add timezone
+        got_date = cc_checkin_trend.cctime_to_datetime(cc_date)
+        self.assertEqual(got_date,expected_date)
 
 class DataCollectorTestCases(TestCase):
     # TODO test that clearcase error lines are skipped

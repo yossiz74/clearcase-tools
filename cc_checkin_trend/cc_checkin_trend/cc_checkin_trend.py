@@ -80,8 +80,9 @@ def get_date_before_some_date(reference_date, num_days_ago):
 
 def cctime_to_datetime(cctime):
     # ClearCase time format: %Y-%m-%dT%H:%M:%S+<timezone hour:minute>
-    # TODO: consider the time zone
-    ts = time.strptime(cctime,"%Y-%m-%dT%H:%M:%S+02:00")
+    # TODO: consider the time zone, for now we remove it
+    base_cctime = cctime[:-6]
+    ts = time.strptime(base_cctime,"%Y-%m-%dT%H:%M:%S")
     return datetime.datetime(ts.tm_year,ts.tm_mon,ts.tm_mday,ts.tm_hour,ts.tm_min,ts.tm_sec)
     
 
