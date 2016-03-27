@@ -215,13 +215,13 @@ class CSVOutputTestCases(TestCase):
     def test_positive_result_to_csv(self):
         result_time = datetime.datetime(2015,12,3,16, 0,0)
         result_data = 2
-        expected_line = "2015-12-03 16:00:00,2"
+        expected_line = "2015-12-03,16:00:00,2"
         line = cc_checkin_trend.result_to_csv(result_time,result_data)
         self.assertEqual(line,expected_line)
     def test_zero_result_to_csv(self):
         result_time = datetime.datetime(2015,12,3,16, 0,0)
         result_data = 0
-        expected_line = "2015-12-03 16:00:00,0"
+        expected_line = "2015-12-03,16:00:00,0"
         line = cc_checkin_trend.result_to_csv(result_time,result_data)
         self.assertEqual(line,expected_line)
     def test_csv_histogram_hourly(self):

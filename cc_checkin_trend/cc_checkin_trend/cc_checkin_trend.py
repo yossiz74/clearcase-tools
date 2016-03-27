@@ -129,7 +129,9 @@ def result_to_text(timestamp,count):
     return line
 
 def result_to_csv(timestamp,count):
-    line = str(timestamp) + ',' + str(count)
+    date_only = datetime.date(timestamp.year,timestamp.month,timestamp.day)
+    time_only = datetime.time(timestamp.hour,timestamp.minute,timestamp.second)
+    line = str(date_only) + ',' + str(time_only) + ',' + str(count)
     return line
 
 def create_text_histogram(data_points,from_date,to_date,interval):
@@ -168,7 +170,7 @@ def main():
     data_points = compute_trend_data(combined_checkin_times,args.interval)
     if len(data_points) > 0:
         if args.csv:
-            print "timestamp,count"
+            print "date,time,count"
             lines = create_csv_histogram(data_points,from_date,to_date,args.interval)
             for line in lines:
                 print line
