@@ -22,18 +22,21 @@ class ArgParserTestCases(CommandLineTestCase):
         args = self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7'])
         self.assertEqual(args.branch,'main')
         self.assertEqual(args.days,7)
-        self.assertEqual(args.path,'\\scm\\scripts')
+        self.assertEqual(args.path,['\\scm\\scripts'])
         self.assertEqual(args.interval,cc_checkin_trend.DEFAULT_INTERVAL)
     def test_optional_args(self):
-        args = self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7', '-i', '99', '--csv'])
+        args = self.parser.parse_args(['\\scm\\scripts', '-b', 'dev_1.0', '-d', '4', '-i', '99', '--csv'])
         self.assertEqual(args.interval,99)
         self.assertTrue(args.csv)
-    def test_too_many_paths(self):
-        with self.assertRaises(SystemExit):
-            self.parser.parse_args(['\\scm\\scripts', '\\vob1\\src', '-b', 'main', '-d', '7'])
+    def test_multiple_paths(self):
+        args = self.parser.parse_args(['\\scm\\scripts', '\\vob1\\src', '-b', 'main', '-d', '7'])
+        self.assertEqual(args.path,['\\scm\\scripts','\\vob1\\src'])
     def test_missing_arg(self):
         with self.assertRaises(SystemExit):
             self.parser.parse_args(['\\scm\\scripts', '-b', '-d', '7'])
+#    def test_repeating_arg(self):
+#        with self.assertRaises(SystemExit):
+#            self.parser.parse_args(['\\scm\\scripts', '-b', 'main', '-d', '7', '-d', '1'])
 
 class ArgValidatorTestCases(TestCase):
     def test_branch_existing_in_vob(self):
@@ -96,7 +99,7 @@ class FormatConvertorTestCases(TestCase):
 class DataCollectorTestCases(TestCase):
     # TODO test that clearcase error lines are skipped
     # TODO test when one of the children paths contains spaces
-    def test_checkin_list_1(self):
+    def test_checkin_list_short(self):
         path="V:\\scm\\scripts"
         branch="v12.2"
         since_date=datetime.date(2016,3,17)
@@ -104,7 +107,7 @@ class DataCollectorTestCases(TestCase):
         expected_list=["2016-03-18T11:20:24+02:00","2016-03-18T11:30:37+02:00","2016-03-20T09:16:04+02:00","2016-03-18T11:20:25+02:00"]
         times_list = cc_checkin_trend.get_checkin_times(path,branch,since_date,upto_date)
         self.assertEqual(times_list,expected_list)
-    def test_checkin_list_2(self):
+    def test_checkin_list_empty(self):
         path="V:\\scm\\scripts"
         branch="main"
         since_date=datetime.date(2016,3,17)
@@ -112,7 +115,7 @@ class DataCollectorTestCases(TestCase):
         expected_list=[]
         times_list = cc_checkin_trend.get_checkin_times(path,branch,since_date,upto_date)
         self.assertEqual(times_list,expected_list)
-    def test_checkin_list_3(self):
+    def test_checkin_list_long(self):
         path="V:\\scm\\scripts"
         branch="main"
         since_date=datetime.date(2015,12,1)
