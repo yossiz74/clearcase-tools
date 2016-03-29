@@ -97,8 +97,7 @@ def get_checkin_times(path, branch, since_date, upto_date):
         raise TypeError
     upto_not_including_date = upto_date + datetime.timedelta(days=1)
     query = 'brtype(' + branch + ')&&created_since(' + since_date.strftime("%d-%b-%Y") + ')&&!created_since(' + upto_not_including_date.strftime("%d-%b-%Y") + ')'
-    #out = subprocess.check_output(["cleartool","find",path,"-version",query,"-print"],shell=False)
-    out = subprocess.check_output(["cleartool","find",path,"-version",query,"-exec","cleartool desc -fmt %d\\n \"%CLEARCASE_XPN%\""],shell=False)
+    out = subprocess.check_output(["cleartool","find",path,"-version",query,"-exec","cleartool desc -fmt %d\\n \"%CLEARCASE_XPN%\""],shell=False,stderr=subprocess.PIPE)
     return filter(None, out.split('\r\n'))
 
 # compute the checkins per interval, and return an dictionary of starttime->amount, ignoring empty intervals
